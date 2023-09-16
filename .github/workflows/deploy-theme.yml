@@ -1,0 +1,43 @@
+name: Deploy Theme
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install Node.js dependencies
+      run: yarn install --immutable --immutable-cache --check-cache
+
+    - name: Zip Ghost theme
+      run: yarn zip
+
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: headline.zip
+        path: dist/headline.zip
+
+    - name: Deploy Ghost Theme
+      uses: TryGhost/action-deploy-theme@v1
+      with:
+        api-url: ${{ secrets.GHOST_ADMIN_API_URL }}
+        api-key: ${{ secrets.GHOST_ADMIN_API_KEY }}
